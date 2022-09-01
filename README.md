@@ -283,17 +283,17 @@ with Client(host=__HOST, port=__PORT, namespace=__NAMESPACE) as plc:
 
     Args:
         subscriptions:list[Subscription],
-        HoldTime:str="",
-        WaitTime:int=0,
-        ReturnAllItems:bool=False,
-        ReturnErrorText:bool=True,
-        ReturnDiagnosticInfo:bool=False,
-        ReturnItemTime:bool=False,
-        ReturnItemPath:bool=False,
-        ReturnItemName:bool=False,
-        RequestDeadline:str="",
-        ClientRequestHandle:str="",
-        LocaleID:str="",
+        holdTime:str="",
+        waitTime:int=0,
+        returnAllItems:bool=False,
+        returnErrorText:bool=True,
+        returnDiagnosticInfo:bool=False,
+        returnItemTime:bool=False,
+        returnItemPath:bool=False,
+        returnItemName:bool=False,
+        requestDeadline:str="",
+        clientRequestHandle:str="",
+        localeID:str="",
         namespace:str=""
 
     Returns:
@@ -349,7 +349,7 @@ with Client(host=__HOST, port=__PORT, namespace=__NAMESPACE) as plc:
             example:
                 [
                     Tag(
-                        itemName='//MachineStatistics/ScannerStatistics/1/Counts/GoodRead',
+                        itemName='//path/to/item',
                         value='',
                         itemPath='',
                         type='',
