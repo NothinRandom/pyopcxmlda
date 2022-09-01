@@ -323,19 +323,6 @@ with Client(host=__HOST, port=__PORT, namespace=__NAMESPACE) as plc:
 
 
     """
-    Write a set of item values
-
-    Args:
-        itemList(list): the list of tags
-        namespace(str): override the default namespace
-
-    Returns:
-        result(list): list of tags on error else empty list
-    """
-    response = plc.write(subscriptions=__SUBSCRIPTIONS)
-
-
-    """
     Write mixed item values
         example: write randomly mixed data types
 
@@ -359,6 +346,6 @@ with Client(host=__HOST, port=__PORT, namespace=__NAMESPACE) as plc:
     Notes:
         look at __ITEMS to understand named tuple setup
     """
-    plc.write(itemList=__ITEMS)
+    response = plc.write(itemList=__ITEMS)
 
 ```
