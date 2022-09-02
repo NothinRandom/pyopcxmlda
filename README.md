@@ -130,7 +130,7 @@ with Client(host=__HOST, port=__PORT, namespace=__NAMESPACE) as plc:
     Get Properties of an item(s)
 
     Args:
-        itemList:list[Tag]=[], 
+        itemList:list=[], 
         namespace:str="",
         localeID:str="",
         clientRequestHandle:str="",
@@ -221,7 +221,7 @@ with Client(host=__HOST, port=__PORT, namespace=__NAMESPACE) as plc:
     Subscribe a set of item values
 
     Args:
-        itemList:list[Tag]=[],
+        itemList:list=[],
         namespace:str="",
         returnValuesOnReply:bool=False,
         subscriptionPingRate:int=0,

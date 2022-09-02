@@ -211,7 +211,7 @@ class Client:
 
     def getProperties(
         self, 
-        itemList:list[Tag]=[], 
+        itemList:list=[], 
         namespace:str="",
         localeID:str="",
         clientRequestHandle:str="",
@@ -274,7 +274,7 @@ class Client:
         return result
 
 
-    def _parseGetPropertiesResponse(self, content:str) -> list[Properties]:
+    def _parseGetPropertiesResponse(self, content:str) -> list:
         """
         Parse Get Properties response
 
@@ -366,7 +366,7 @@ class Client:
         return status
 
 
-    def _buildReadItems(self, itemList:list[Tag]=[], namespace:str="") -> str:
+    def _buildReadItems(self, itemList:list, namespace:str="") -> str:
         """
         Build the <Items> content payload for read request
 
@@ -398,7 +398,7 @@ class Client:
         return items
 
 
-    def _buildReadPayload(self, itemList:list[Tag]=[], namespace:str="") -> str:
+    def _buildReadPayload(self, itemList:list, namespace:str="") -> str:
         """
         Build read request payload that encapsulates a list of <Item> tags
 
@@ -422,7 +422,7 @@ class Client:
         return payload
 
 
-    def read(self, itemList:list[Tag]=[], namespace:str="") -> list:
+    def read(self, itemList:list=[], namespace:str="") -> list:
         """
         Read tags data from the server
 
@@ -448,7 +448,7 @@ class Client:
 
 
     def subscribe(self,
-        itemList:list[Tag]=[],
+        itemList:list=[],
         namespace:str="",
         returnValuesOnReply:bool=False,
         subscriptionPingRate:int=0,
@@ -469,7 +469,7 @@ class Client:
         Subscribe item(s)
 
         Args:
-            itemList:list[Tag]=[],
+            itemList:list=[Tag],
             namespace:str="",
             returnValuesOnReply:bool=False,
             subscriptionPingRate:int=0,
@@ -656,7 +656,7 @@ class Client:
         return fault
 
 
-    def _buildSubscriptionPolledRefreshItems(self, subscriptions:list[Subscription], namespace:str="") -> str:
+    def _buildSubscriptionPolledRefreshItems(self, subscriptions:list, namespace:str="") -> str:
         """
         Build the <Items> content payload for Subscription Polled Refresh request
 
@@ -681,7 +681,7 @@ class Client:
 
     def subscriptionPolledRefresh(
         self,
-        subscriptions:list[Subscription],
+        subscriptions:list,
         namespace:str="",
         holdTime:str="",
         waitTime:int=0,
@@ -694,7 +694,7 @@ class Client:
         requestDeadline:str="",
         clientRequestHandle:str="",
         localeID:str=""
-    ) -> list[Subscription]:
+    ) -> list:
         """
         Poll subscribed items
 
@@ -757,7 +757,7 @@ class Client:
         return result
 
 
-    def _parseSubscriptionPolledRefreshResponse(self, content:str) -> list[Subscription]:
+    def _parseSubscriptionPolledRefreshResponse(self, content:str) -> list:
         """
         Parse Subscription Polled Refresh response
 
@@ -812,7 +812,7 @@ class Client:
         return result
 
 
-    def _buildWriteItems(self, itemList:list[Tag]=[], namespace:str="") -> str:
+    def _buildWriteItems(self, itemList:list, namespace:str="") -> str:
         """
         Build the <Items> content payload for write request
 
@@ -827,19 +827,18 @@ class Client:
             items(str):     items that are delimited by new line char
         """
 
-        tags = self.itemList if not itemList else itemList
         ns = self.namespace if not namespace else namespace
         items = ""
-        for tag in tags:
-            items += (f'<{ns}:Items ClientItemHandle="{tag.itemName}" '
-                        f'ItemPath="{tag.itemPath}" ItemName="{tag.itemName}" '
-                        f'ValueTypeQualifier="{tag.type}">'
-                        f'<Value xsi:Type="{tag.type}">{tag.value}</Value></{ns}:Items>'
+        for item in itemList:
+            items += (f'<{ns}:Items ClientItemHandle="{item.itemName}" '
+                        f'ItemPath="{item.itemPath}" ItemName="{item.itemName}" '
+                        f'ValueTypeQualifier="{item.type}">'
+                        f'<Value xsi:Type="{item.type}">{item.value}</Value></{ns}:Items>'
                     )
         return items
 
 
-    def _buildWritePayload(self, itemList:list[Tag]=[], namespace:str="") -> str:
+    def _buildWritePayload(self, itemList:list, namespace:str="") -> str:
         """
         Build write request payload that encapsulates a list of <Item> tags
 
@@ -864,7 +863,7 @@ class Client:
         return payload
 
 
-    def write(self, itemList:list[Tag]=[], namespace:str="") -> list:
+    def write(self, itemList:list=[], namespace:str="") -> list:
         """
         Write tags data to the server
 
