@@ -1,3 +1,4 @@
+import logging
 import requests
 import xml.etree.ElementTree as ET
 
@@ -11,18 +12,28 @@ from .tag import (
     Tag
 )
 
+logging.basicConfig(
+    level=logging.ERROR,
+    format='%(asctime)s %(message)s',
+    handlers=[
+        #logging.FileHandler("output.log"),
+        logging.StreamHandler()
+    ]
+)
 
 class Client:
+    __log = logging.getLogger(f"{__name__}")
+
     def __init__(self, host:str, port:int=9500, namespace:str="ns0"):
         self.ipAddress = host
         self.port = port
         self.url = f"http://{self.ipAddress}:{self.port}/?wsdl"
+        self.session = requests.Session()
         self.itemList = []
         self.namespace = namespace
         self.headers = const.HEADERS_SOAP
         self.timeout = 5
         self.backoff = 5
-        self.debug = False
 
 
     # used by statement with
@@ -32,6 +43,7 @@ class Client:
 
     # used by statement with
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
         return False
 
 
@@ -68,6 +80,20 @@ class Client:
         return footer
 
 
+    def set_debug(self, enable:bool):
+        if enable:
+            self.__log.setLevel(logging.DEBUG)
+        else:
+            self.__log.setLevel(logging.ERROR)
+
+
+    def close(self):
+        """
+        Terminate sessions
+        """
+        self.session.close()
+
+
     def send(self, payload:str, timeout:int=-1) -> str:
         """
         Send payload to server
@@ -82,17 +108,20 @@ class Client:
         timeout = self.timeout if timeout < 0 else timeout
 
         try:
-            response = requests.post(
+            response = self.session.post(
                 url=self.url,
                 data=payload,
                 headers=self.headers,
                 timeout=timeout
             )
         except requests.ConnectTimeout:
+            self.__log.error(f"self.send(): {str(requests.ConnectTimeout)}")
             return ""
         except requests.ConnectionError:
+            self.__log.error(f"self.send(): {str(requests.ConnectionError)}")
             return ""
         except requests.Timeout:
+            self.__log.error(f"self.send(): {str(requests.Timeout)}")
             return ""
         return response.content
 
@@ -152,11 +181,9 @@ class Client:
             f'</{ns}:Browse>'
         )
         payload += self._buildEncapsulationFooter()
-        if self.debug:
-            print(f"Sent Browse Payload: \n{payload}")
+        self.__log.debug(f"Sent Browse Payload: \n{payload}")
         response = self.send(payload=payload)
-        if self.debug:
-            print(f"Received Browse Response: \n{response}")
+        self.__log.debug(f"Received Browse Response: \n{response}")
         result = self._parseBrowseResponse(content=response)
         return result
 
@@ -178,6 +205,7 @@ class Client:
         try:
             root = ET.fromstring(content)
         except ET.ParseError:
+            self.__log.error(f"self._parseBrowseResponse(): {str(ET.ParseError)}")
             return result.append(
                 Elements(
                     fault=fault(faultcode="ET.ParseError", detail=str(ET.ParseError))
@@ -265,11 +293,9 @@ class Client:
         payload += items
         payload += f'</{ns}:GetProperties>'
         payload += self._buildEncapsulationFooter()
-        if self.debug:
-            print(f"Sent GetProperties Payload: \n{payload}")
+        self.__log.debug(f"Sent GetProperties Payload: \n{payload}")
         response = self.send(payload=payload)
-        if self.debug:
-            print(f"Received GetProperties Response: \n{response}")
+        self.__log.debug(f"Received GetProperties Response: \n{response}")
         result = self._parseGetPropertiesResponse(content=response)
         return result
 
@@ -290,6 +316,7 @@ class Client:
         try:
             root = ET.fromstring(content)
         except ET.ParseError:
+            self.__log.error(f"self._parseGetPropertiesResponse(): {str(ET.ParseError)}")
             return result.append(Properties(error=str(ET.ParseError)))
 
         properties = Properties()
@@ -342,11 +369,9 @@ class Client:
         payload += self._buildEncapsulationHeader(namespace=ns)
         payload += f'<{ns}:GetStatus LocaleID="{localeID}" ClientRequestHandle="{clientRequestHandle}" ></{ns}:GetStatus>'
         payload += self._buildEncapsulationFooter()
-        if self.debug:
-            print(f"Sent GetStatus Payload: \n{payload}")
+        self.__log.debug(f"Sent GetStatus Payload: \n{payload}")
         response = self.send(payload=payload)
-        if self.debug:
-            print(f"Received GetStatus Response: \n{response}")
+        self.__log.debug(f"Received GetStatus Response: \n{response}")
         
         status = Status()
         root = ET.fromstring(response)
@@ -438,11 +463,9 @@ class Client:
         namespace = self.namespace if not namespace else namespace
 
         payload = self._buildReadPayload(itemList=tags, namespace=namespace)
-        if self.debug:
-            print(f"Sent Read Payload: \n{payload}")
+        self.__log.debug(f"Sent Read Payload: \n{payload}")
         response = self.send(payload=payload)
-        if self.debug:
-            print(f"Received Read Response: \n{response}")
+        self.__log.debug(f"Received Read Response: \n{response}")
         result = self._parseReadWriteResponse(content=response)
         return result
 
@@ -544,11 +567,9 @@ class Client:
         payload += items
         payload += f'</{ns}:ItemList></{ns}:Subscribe>'
         payload += self._buildEncapsulationFooter()
-        if self.debug:
-            print(f"Sent Subscribe Payload: \n{payload}")
+        self.__log.debug(f"Sent Subscribe Payload: \n{payload}")
         response = self.send(payload=payload)
-        if self.debug:
-            print(f"Received Subscribe Response: \n{response}")
+        self.__log.debug(f"Received Subscribe Response: \n{response}")
         result = self._parseSubscribeResponse(content=response)
         return result
 
@@ -569,6 +590,7 @@ class Client:
         try:
             root = ET.fromstring(content)
         except ET.ParseError:
+            self.__log.error(f"self._parseSubscribeResponse(): {str(ET.ParseError)}")
             subscription = subscription._replace(error=str(ET.ParseError))
             return subscription
 
@@ -618,11 +640,9 @@ class Client:
             f'</{ns}:SubscriptionCancel>'
         )
         payload += self._buildEncapsulationFooter()
-        if self.debug:
-            print(f"Sent SubscriptionCancel Payload: \n{payload}")
+        self.__log.debug(f"Sent SubscriptionCancel Payload: \n{payload}")
         response = self.send(payload=payload)
-        if self.debug:
-            print(f"Received SubscriptionCancel Response: \n{response}")
+        self.__log.debug(f"Received SubscriptionCancel Response: \n{response}")
         result = self._parseSubscriptionCancelResponse(content=response)
         return result
 
@@ -643,6 +663,7 @@ class Client:
         try:
             root = ET.fromstring(content)
         except ET.ParseError:
+            self.__log.error(f"self._parseSubscriptionCancelResponse(): {str(ET.ParseError)}")
             fault = fault._replace(faultcode="ET.ParseError", detail=str(ET.ParseError))
             return fault
         
@@ -748,11 +769,9 @@ class Client:
         payload += self._buildSubscriptionPolledRefreshItems(subscriptions=subscriptions, namespace=namespace)
         payload += f'</{ns}:SubscriptionPolledRefresh>'
         payload += self._buildEncapsulationFooter()
-        if self.debug:
-            print(f"Sent SubscriptionPolledRefresh Payload: \n{payload}")
+        self.__log.debug(f"Sent SubscriptionPolledRefresh Payload: \n{payload}")
         response = self.send(payload=payload)
-        if self.debug:
-            print(f"Received SubscriptionPolledRefresh Response: \n{response}")
+        self.__log.debug(f"Received SubscriptionPolledRefresh Response: \n{response}")
         result = self._parseSubscriptionPolledRefreshResponse(content=response)
         return result
 
@@ -773,6 +792,7 @@ class Client:
         try:
             root = ET.fromstring(content)
         except ET.ParseError:
+            self.__log.error(f"self._parseSubscriptionPolledRefreshResponse(): {str(ET.ParseError)}")
             return result.append(Subscription(error=str(ET.ParseError)))
 
         subscription = Subscription()
@@ -879,11 +899,9 @@ class Client:
         ns = self.namespace if not namespace else namespace
 
         payload = self._buildWritePayload(itemList=tags, namespace=ns)
-        if self.debug:
-            print(f"Sent Write Payload: \n{payload}")
+        self.__log.debug(f"Sent Write Payload: \n{payload}")
         response = self.send(payload=payload)
-        if self.debug:
-            print(f"Received Write Response: \n{response}")
+        self.__log.debug(f"Received Write Response: \n{response}")
         result = self._parseReadWriteResponse(content=response)
         return result
 
@@ -904,7 +922,8 @@ class Client:
         try:
             root = ET.fromstring(content)
         except ET.ParseError:
-            return result.append(Tag(error=str(ET.ParseError)))
+            self.__log.error(f"self._parseReadWriteResponse(): {str(ET.ParseError)}")
+            return result.append(Tag(itemName="", error=str(ET.ParseError)))
         for p in root.findall('.//'):
             if "Items" in p.tag:
                 tag = Tag(itemName=p.attrib["ClientItemHandle"])

@@ -1,3 +1,7 @@
+v0.1.2:
+* using session to speed up sequential reads
+* added basic logging
+
 v0.1.1:
 * fix list typing (must have been a long day)
 
