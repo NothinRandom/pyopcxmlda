@@ -31,6 +31,7 @@ pip3 install pyopcxmlda
 from datetime import datetime
 from pyopcxmlda import Client
 from pyopcxmlda.tag import Tag
+from pyopcxmlda.constants import DataType
 
 """
 Typical data types:
@@ -50,10 +51,10 @@ Typical data types:
 """
 
 __ITEMS = [
-    Tag(itemName="//path/to/node/item1", value=-10, type="signedInt"),
-    Tag(itemName="//path/to/node/item2", value=10, type="unsignedInt"),
-    Tag(itemName="//path/to/node/item3", value=-10.0, type="float"),
-    Tag(itemName="//path/to/node/item4", value=-1000, type="long")
+    Tag(itemName="//path/to/node/item1", value=-10, type=DataType.INT),
+    Tag(itemName="//path/to/node/item2", value=10, type=DataType.UINT),
+    Tag(itemName="//path/to/node/item3", value=-10.0, type=DataType.FLOAT),
+    Tag(itemName="//path/to/node/item4", value=-1000, type=DataType.LONG)
 ]
 
 __HOST = '192.168.1.15' # REQUIRED
@@ -87,8 +88,8 @@ with Client(host=__HOST, port=__PORT, namespace=__NAMESPACE) as plc:
                         xsiType='ns1:BrowseElement', 
                         hasChildren=False, 
                         isItem=True, 
-                        name='DispatchMode', 
-                        itemName='//SystemStatus/DispatchMode', 
+                        name='item', 
+                        itemName='//path/to/valid/item', 
                         itemPath='',
                         fault=None
                     )
@@ -146,8 +147,8 @@ with Client(host=__HOST, port=__PORT, namespace=__NAMESPACE) as plc:
                     Properties(
                         itemPath='', 
                         itemName='//path/to/node', 
-                        dataType='xsd:unsignedInt', 
-                        value='3620759', 
+                        dataType='unsignedInt', 
+                        value=3620759, 
                         timestamp='2022-08-31T18:23:04Z', 
                         accessRights='readable', 
                         scanRate='10', 
@@ -198,9 +199,9 @@ with Client(host=__HOST, port=__PORT, namespace=__NAMESPACE) as plc:
                 [
                     Tag(
                         itemName='//path/to/node/item2',
-                        value='3556464',
+                        value=3556464,
                         itemPath='',
-                        type='xsd:unsignedInt',
+                        type='unsignedInt',
                         error=''
                     )
                 ]
@@ -247,8 +248,8 @@ with Client(host=__HOST, port=__PORT, namespace=__NAMESPACE) as plc:
                     items=[
                         {
                             'ClientItemHandle': '//path/to/node', 
-                            'type': 'xsd:unsignedInt', 
-                            'value': '6229'
+                            'type': 'unsignedInt', 
+                            'value': 6229
                         }
                     ]
                 )
@@ -305,13 +306,13 @@ with Client(host=__HOST, port=__PORT, namespace=__NAMESPACE) as plc:
                         items=[
                             {
                                 'itemName': '//path/to/node1', 
-                                'type': 'xsd:unsignedInt', 
-                                'value': '3624471'
+                                'type': 'unsignedInt', 
+                                'value': 3624471
                             }, 
                             {
                                 'itemName': '//path/to/node2', 
-                                'type': 'xsd:unsignedInt', 
-                                'value': '6241'
+                                'type': 'unsignedInt', 
+                                'value': 6241
                             }
                         ]
                     ), 

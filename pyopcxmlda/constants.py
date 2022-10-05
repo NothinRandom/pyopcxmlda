@@ -17,3 +17,20 @@ ENVELOPE_BODY_OPEN = '<SOAP-ENV:Body>'
 # PAYLOAD GOES HERE
 ENVELOPE_BODY_CLOSE = '</SOAP-ENV:Body>'
 ENVELOPE_CLOSE = '</SOAP-ENV:Envelope>'
+
+
+class DataType:
+    BOOL        = 'boolean'
+    BYTE        = 'byte'
+    UBYTE       = 'unsignedByte'
+    SHORT       = 'short'
+    USHORT      = 'unsignedShort'
+    INT         = 'int'
+    UINT        = 'unsignedInt'
+    FLOAT       = 'float'
+    DOUBLE      = 'double'
+    LONG        = 'long'
+    ULONG       = 'unsignedLong'
+    DECIMAL     = 'decimal'
+    STRING      = 'string'
+    DATETIME    = 'dateTime'

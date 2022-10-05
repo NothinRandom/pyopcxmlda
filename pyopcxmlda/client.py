@@ -11,6 +11,7 @@ from .tag import (
     Subscription,
     Tag
 )
+from .utility import cast_data
 
 logging.basicConfig(
     level=logging.ERROR,
@@ -216,7 +217,7 @@ class Client:
             if "Elements" in p.tag:
                 result.append(
                     Elements(
-                        xsiType=p.get("{http://www.w3.org/2001/XMLSchema-instance}type"), 
+                        xsiType=p.get("{http://www.w3.org/2001/XMLSchema-instance}type").replace("xsd:", ""), 
                         hasChildren=(p.attrib["HasChildren"]=="true"), 
                         isItem=(p.attrib["IsItem"]=="true"), 
                         name=p.attrib["Name"], 
@@ -328,6 +329,7 @@ class Client:
             elif p.tag.endswith("Properties"):
                 name = p.attrib["Name"]
                 value = p.find('.//')
+                # TODO: properly cast data
                 if value is not None:
                     if "dataType" in name:
                         properties = properties._replace(dataType=value.text)
@@ -603,10 +605,12 @@ class Client:
                 tag_name = p.attrib["ClientItemHandle"]
                 value = p.find('.//')
                 if value is not None:
+                    data_type = value.get("{http://www.w3.org/2001/XMLSchema-instance}type").replace("xsd:", "")
                     itemList.append(
-                        {   "clientItemHandle": f"{tag_name}",
-                            "type": f'{value.get("{http://www.w3.org/2001/XMLSchema-instance}type")}',
-                            "value": f'{value.text}'
+                        {   
+                            "clientItemHandle": f"{tag_name}",
+                            "type": data_type,
+                            "value": cast_data(value=value.text, data_type=data_type)
                         }
                     )
             elif p.tag.endswith("Errors"):
@@ -814,10 +818,12 @@ class Client:
                 itemName = p.attrib["ClientItemHandle"]
                 value = p.find('.//')
                 if value is not None:
+                    data_type = value.get("{http://www.w3.org/2001/XMLSchema-instance}type").replace("xsd:", "")
                     itemList.append(
-                        {   "itemName": f"{itemName}",
-                            "type": f'{value.get("{http://www.w3.org/2001/XMLSchema-instance}type")}',
-                            "value": f'{value.text}'
+                        {   
+                            "itemName": f"{itemName}",
+                            "type": data_type,
+                            "value": cast_data(value=value.text, data_type=data_type)
                         }
                     )
             elif p.tag.endswith("Errors"):
@@ -840,7 +846,7 @@ class Client:
             itemList(list):  list of tags
                 example:
                 [
-                    Tag(itemName="//node/path/to/item", itemPath="", value="5", type="UnsignedInt")
+                    Tag(itemName="//node/path/to/item", itemPath="", value=5, type="unsignedInt")
                 ]
             namespace(str):  namespace
         Returns:
@@ -852,8 +858,8 @@ class Client:
         for item in itemList:
             items += (f'<{ns}:Items ClientItemHandle="{item.itemName}" '
                         f'ItemPath="{item.itemPath}" ItemName="{item.itemName}" '
-                        f'ValueTypeQualifier="{item.type}">'
-                        f'<Value xsi:Type="{item.type}">{item.value}</Value></{ns}:Items>'
+                        f'ValueTypeQualifier="xsd:{item.type}">'
+                        f'<Value xsi:Type="xsd:{item.type}">{item.value}</Value></{ns}:Items>'
                     )
         return items
 
@@ -930,7 +936,11 @@ class Client:
                 value = p.find('.//')
                 # get value
                 if value is not None:
-                    tag = tag._replace(value=value.text, type=value.get("{http://www.w3.org/2001/XMLSchema-instance}type"))
+                    data_type = value.get("{http://www.w3.org/2001/XMLSchema-instance}type").replace("xsd:", "")
+                    tag = tag._replace(
+                        value=cast_data(value=value.text, data_type=data_type), 
+                        type=data_type
+                    )
                 if "ResultID" in p.attrib:
                     tag = tag._replace(error=p.attrib["ResultID"])
                 result.append(tag)
