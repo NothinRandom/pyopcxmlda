@@ -36,3 +36,4 @@ class DataType:
     DECIMAL     = 'decimal'
     STRING      = 'string'
     DATETIME    = 'dateTime'
+    ARRAY       = 'ArrayOf'

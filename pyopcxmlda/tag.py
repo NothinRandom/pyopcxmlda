@@ -43,6 +43,8 @@ class Tag(NamedTuple):
     itemPath: Optional[str] = ''    #: item path
     type: Optional[str] = ''        #: data type of tag
     error: Optional[str] = ''       #: error message if unsuccessful, else ``None``
+    quality: Optional[dict] = None  #: quality of value
+
 
 
     def __bool__(self):

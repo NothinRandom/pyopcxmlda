@@ -91,7 +91,7 @@ class Client:
         """
         self.session.close()
 
-    def send(self, payload: str, timeout: int = -1) -> str:
+    def send(self, payload: str, timeout: int = -1) -> bytes:
         """
         Send payload to server
 
@@ -113,13 +113,13 @@ class Client:
             )
         except requests.ConnectTimeout:
             self.__log.error(f"self.send(): {str(requests.ConnectTimeout)}")
-            return ""
+            return b""
         except requests.ConnectionError:
             self.__log.error(f"self.send(): {str(requests.ConnectionError)}")
-            return ""
+            return b""
         except requests.Timeout:
             self.__log.error(f"self.send(): {str(requests.Timeout)}")
-            return ""
+            return b""
         return response.content
 
     def browse(
@@ -183,7 +183,7 @@ class Client:
         result = self._parseBrowseResponse(content=response)
         return result
 
-    def _parseBrowseResponse(self, content: str) -> list:
+    def _parseBrowseResponse(self, content: bytes) -> list:
         """
         Parse Browse response
 
@@ -201,11 +201,12 @@ class Client:
             root = ET.fromstring(content)
         except ET.ParseError:
             self.__log.error(f"self._parseBrowseResponse(): {str(ET.ParseError)}")
-            return result.append(
+            result.append(
                 Elements(
-                    fault=fault(faultcode="ET.ParseError", detail=str(ET.ParseError))
+                    fault=fault._replace(faultcode="ET.ParseError", detail=str(ET.ParseError))
                 )
             )
+            return result
 
         for p in root.findall('.//'):
             if "Elements" in p.tag:
@@ -233,7 +234,7 @@ class Client:
 
     def getProperties(
             self,
-            itemList: list = [],
+            itemList: list = None,
             namespace: str = "",
             localeID: str = "",
             clientRequestHandle: str = "",
@@ -248,17 +249,19 @@ class Client:
         Args:
             itemList(list[Tag]): list of tag
             namespace(str): override namespace
-            LocaleID(str): language setting
-            ClientRequestHandle(str): request identifier
-            ItemPath(str): overall path
-            ReturnAllProperties(bool): 
-            ReturnPropertyValues(bool): 
-            ReturnErrorText(bool): 
+            localeID(str): language setting
+            clientRequestHandle(str): request identifier
+            itemPath(str): overall path
+            returnAllProperties(bool):
+            returnPropertyValues(bool):
+            returnErrorText(bool):
 
         Returns:
             result(Properties): named tuple
         """
 
+        if itemList is None:
+            itemList = []
         ns = self.namespace if not namespace else namespace
         tags = self.itemList if not itemList else itemList
 
@@ -293,7 +296,7 @@ class Client:
         result = self._parseGetPropertiesResponse(content=response)
         return result
 
-    def _parseGetPropertiesResponse(self, content: str) -> list:
+    def _parseGetPropertiesResponse(self, content: bytes) -> list:
         """
         Parse Get Properties response
 
@@ -310,7 +313,8 @@ class Client:
             root = ET.fromstring(content)
         except ET.ParseError:
             self.__log.error(f"self._parseGetPropertiesResponse(): {str(ET.ParseError)}")
-            return result.append(Properties(error=str(ET.ParseError)))
+            result.append(Properties(error=str(ET.ParseError)))
+            return result
 
         properties = Properties()
         for p in root.findall('.//'):
@@ -465,7 +469,7 @@ class Client:
         payload += self._buildEncapsulationFooter()
         return payload
 
-    def read(self, itemList=None, options=None, namespace: str = "") -> list:
+    def read(self, itemList: list = None, options: dict = None, namespace: str = "") -> list:
         """
         Read tags data from the server
 
@@ -494,7 +498,7 @@ class Client:
         return result
 
     def subscribe(self,
-                  itemList: list = [],
+                  itemList: list = None,
                   namespace: str = "",
                   returnValuesOnReply: bool = False,
                   subscriptionPingRate: int = 0,
@@ -536,6 +540,8 @@ class Client:
             result(Subscription): named tuple
         """
 
+        if itemList is None:
+            itemList = []
         ns = self.namespace if not namespace else namespace
         tags = self.itemList if not itemList else itemList
 
@@ -596,7 +602,7 @@ class Client:
         result = self._parseSubscribeResponse(content=response)
         return result
 
-    def _parseSubscribeResponse(self, content: str) -> Subscription:
+    def _parseSubscribeResponse(self, content: bytes) -> Subscription:
         """
         Parse Subscribe response
 
@@ -669,7 +675,7 @@ class Client:
         result = self._parseSubscriptionCancelResponse(content=response)
         return result
 
-    def _parseSubscriptionCancelResponse(self, content: str) -> Fault:
+    def _parseSubscriptionCancelResponse(self, content: bytes) -> Fault:
         """
         Parse Subscription Cancel response
 
@@ -795,7 +801,7 @@ class Client:
         result = self._parseSubscriptionPolledRefreshResponse(content=response)
         return result
 
-    def _parseSubscriptionPolledRefreshResponse(self, content: str) -> list:
+    def _parseSubscriptionPolledRefreshResponse(self, content: bytes) -> list:
         """
         Parse Subscription Polled Refresh response
 
@@ -812,7 +818,8 @@ class Client:
             root = ET.fromstring(content)
         except ET.ParseError:
             self.__log.error(f"self._parseSubscriptionPolledRefreshResponse(): {str(ET.ParseError)}")
-            return result.append(Subscription(error=str(ET.ParseError)))
+            result.append(Subscription(error=str(ET.ParseError)))
+            return result
 
         subscription = Subscription()
         itemList = []
@@ -901,7 +908,7 @@ class Client:
         payload += self._buildEncapsulationFooter()
         return payload
 
-    def write(self, itemList: list = [], namespace: str = "") -> list:
+    def write(self, itemList: list = None, namespace: str = "") -> list:
         """
         Write tags data to the server
 
@@ -913,6 +920,8 @@ class Client:
             result(list[Tag]): list of tags
         """
 
+        if itemList is None:
+            itemList = []
         tags = self.itemList if not itemList else itemList
         ns = self.namespace if not namespace else namespace
 
@@ -923,7 +932,7 @@ class Client:
         result = self._parseReadWriteResponse(content=response)
         return result
 
-    def _parseReadWriteResponse(self, content: str) -> list:
+    def _parseReadWriteResponse(self, content: bytes) -> list:
         """
         Parse either Read / Write response
 
@@ -940,7 +949,8 @@ class Client:
             root = ET.fromstring(content)
         except ET.ParseError:
             self.__log.error(f"self._parseReadWriteResponse(): {str(ET.ParseError)}")
-            return result.append(Tag(itemName="", error=str(ET.ParseError)))
+            result.append(Tag(itemName="", error=str(ET.ParseError)))
+            return result
         for p in root.findall('.//'):
             if "Items" in p.tag:
                 tag = Tag(itemName=p.attrib["ClientItemHandle"])
@@ -948,11 +958,28 @@ class Client:
                 # get value
                 if value is not None:
                     data_type = value.get("{http://www.w3.org/2001/XMLSchema-instance}type").replace("xsd:", "")
-                    tag = tag._replace(
-                        value=cast_data(value=value.text, data_type=data_type),
-                        type=data_type
-                    )
+                    if "Array" in data_type:
+                        values = []
+                        for v in value.findall('.//'):
+                            values.append(v.text)
+                        tag = tag._replace(
+                            value=cast_data(value=values, data_type=data_type),
+                            type=data_type
+                        )
+                    else:
+                        tag = tag._replace(
+                            value=cast_data(value=value.text, data_type=data_type),
+                            type=data_type
+                        )
                 if "ResultID" in p.attrib:
                     tag = tag._replace(error=p.attrib["ResultID"])
                 result.append(tag)
+            if "Quality" in p.tag:
+                if len(result) == 0:
+                    result.append(Tag(itemName=""))
+                result[-1] = result[-1]._replace(quality={
+                    "QualityField": p.attrib["QualityField"],
+                    "LimitField": p.attrib["LimitField"],
+                    "VendorField": p.attrib["VendorField"]
+                })
         return result
