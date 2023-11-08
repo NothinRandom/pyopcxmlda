@@ -7,7 +7,7 @@ from .tag import (
     Elements,
     Fault,
     Properties,
-    Status, 
+    Status,
     Subscription,
     Tag
 )
@@ -17,15 +17,16 @@ logging.basicConfig(
     level=logging.ERROR,
     format='%(asctime)s %(message)s',
     handlers=[
-        #logging.FileHandler("output.log"),
+        # logging.FileHandler("output.log"),
         logging.StreamHandler()
     ]
 )
 
+
 class Client:
     __log = logging.getLogger(f"{__name__}")
 
-    def __init__(self, host:str, port:int=9500, namespace:str="ns0"):
+    def __init__(self, host: str, port: int = 9500, namespace: str = "ns0"):
         self.ipAddress = host
         self.port = port
         self.url = f"http://{self.ipAddress}:{self.port}/?wsdl"
@@ -36,19 +37,16 @@ class Client:
         self.timeout = 5
         self.backoff = 5
 
-
     # used by statement with
     def __enter__(self):
         return self
-
 
     # used by statement with
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
         return False
 
-
-    def _buildEncapsulationHeader(self, namespace:str="") -> str:
+    def _buildEncapsulationHeader(self, namespace: str = "") -> str:
         """
         Build the encapsulation header
 
@@ -62,10 +60,11 @@ class Client:
         ns = self.namespace if not namespace else namespace
         header = const.ENVELOPE_OPEN.format(ns=ns)
         header += const.ENVELOPE_HEADER
-        header += const.ENVELOPE_BODY_OPEN
+        header += const.ENVELOPE_BODY_OPEN_NS_1
+        header += ns
+        header += const.ENVELOPE_BODY_OPEN_NS_2
 
         return header
-
 
     def _buildEncapsulationFooter(self) -> str:
         """
@@ -80,13 +79,11 @@ class Client:
 
         return footer
 
-
-    def set_debug(self, enable:bool):
+    def set_debug(self, enable: bool):
         if enable:
             self.__log.setLevel(logging.DEBUG)
         else:
             self.__log.setLevel(logging.ERROR)
-
 
     def close(self):
         """
@@ -94,8 +91,7 @@ class Client:
         """
         self.session.close()
 
-
-    def send(self, payload:str, timeout:int=-1) -> str:
+    def send(self, payload: str, timeout: int = -1) -> str:
         """
         Send payload to server
 
@@ -126,21 +122,20 @@ class Client:
             return ""
         return response.content
 
-
     def browse(
-        self, 
-        namespace:str="",
-        itemPath:str="",
-        itemName:str="",
-        clientRequestHandle:str="",
-        continuationPoint:str="",
-        maxElementsReturned:int=0,
-        browseFilter:str="all",
-        elementNameFilter:str="",
-        vendorFilter:str="",
-        returnAllProperties:bool=False,
-        returnPropertyValues:bool=False,
-        returnErrorText:bool=False
+            self,
+            namespace: str = "",
+            itemPath: str = "",
+            itemName: str = "",
+            clientRequestHandle: str = "",
+            continuationPoint: str = "",
+            maxElementsReturned: int = 0,
+            browseFilter: str = "all",
+            elementNameFilter: str = "",
+            vendorFilter: str = "",
+            returnAllProperties: bool = False,
+            returnPropertyValues: bool = False,
+            returnErrorText: bool = False
     ) -> list:
         """
         Browse
@@ -188,8 +183,7 @@ class Client:
         result = self._parseBrowseResponse(content=response)
         return result
 
-
-    def _parseBrowseResponse(self, content:str) -> list:
+    def _parseBrowseResponse(self, content: str) -> list:
         """
         Parse Browse response
 
@@ -199,7 +193,7 @@ class Client:
         Returns:
             result(list[ELements]): list of Elements
         """
-        
+
         fault = Fault()
         result = []
         # walk the XML tree and focus on Items as results
@@ -212,17 +206,17 @@ class Client:
                     fault=fault(faultcode="ET.ParseError", detail=str(ET.ParseError))
                 )
             )
-        
+
         for p in root.findall('.//'):
             if "Elements" in p.tag:
                 result.append(
                     Elements(
-                        xsiType=p.get("{http://www.w3.org/2001/XMLSchema-instance}type").replace("xsd:", ""), 
-                        hasChildren=(p.attrib["HasChildren"]=="true"), 
-                        isItem=(p.attrib["IsItem"]=="true"), 
-                        name=p.attrib["Name"], 
-                        itemName=p.attrib["ItemName"], 
-                        itemPath=p.attrib["ItemPath"], 
+                        xsiType=p.get("{http://www.w3.org/2001/XMLSchema-instance}type").replace("xsd:", ""),
+                        hasChildren=(p.attrib["HasChildren"] == "true"),
+                        isItem=(p.attrib["IsItem"] == "true"),
+                        name=p.attrib["Name"],
+                        itemName=p.attrib["ItemName"],
+                        itemPath=p.attrib["ItemPath"],
                     )
                 )
             elif "faultcode" in p.tag:
@@ -237,17 +231,16 @@ class Client:
 
         return result
 
-
     def getProperties(
-        self, 
-        itemList:list=[], 
-        namespace:str="",
-        localeID:str="",
-        clientRequestHandle:str="",
-        itemPath:str="",
-        returnAllProperties:bool=True,
-        returnPropertyValues:bool=True,
-        returnErrorText:bool=True
+            self,
+            itemList: list = [],
+            namespace: str = "",
+            localeID: str = "",
+            clientRequestHandle: str = "",
+            itemPath: str = "",
+            returnAllProperties: bool = True,
+            returnPropertyValues: bool = True,
+            returnErrorText: bool = True
     ) -> list:
         """
         Get Properties of an item(s)
@@ -300,8 +293,7 @@ class Client:
         result = self._parseGetPropertiesResponse(content=response)
         return result
 
-
-    def _parseGetPropertiesResponse(self, content:str) -> list:
+    def _parseGetPropertiesResponse(self, content: str) -> list:
         """
         Parse Get Properties response
 
@@ -353,8 +345,7 @@ class Client:
             result.append(properties)
         return result
 
-
-    def getStatus(self, clientRequestHandle:str="", localeID:str="") -> Status:
+    def getStatus(self, clientRequestHandle: str = "", localeID: str = "") -> Status:
         """
         Get the server status
 
@@ -374,7 +365,7 @@ class Client:
         self.__log.debug(f"Sent GetStatus Payload: \n{payload}")
         response = self.send(payload=payload)
         self.__log.debug(f"Received GetStatus Response: \n{response}")
-        
+
         status = Status()
         root = ET.fromstring(response)
         for p in root.findall('.//'):
@@ -392,8 +383,7 @@ class Client:
 
         return status
 
-
-    def _buildReadItems(self, itemList:list, namespace:str="") -> str:
+    def _buildReadItems(self, itemList: list, namespace: str = "") -> str:
         """
         Build the <Items> content payload for read request
 
@@ -415,17 +405,40 @@ class Client:
         for tag in tags:
             itemName = tag.itemName
             itemPath = tag.itemPath
-            items += (
-                f'<{ns}:Items '
-                f'ItemPath="{itemPath}" '
-                f'ItemName="{itemName}" '
-                f'ClientItemHandle="{itemName}" '
-                f'></{ns}:Items>'
-            )
+            items += f'<{ns}:Items '
+            if itemName != "":
+                items += f'ItemName="{itemName}" '
+            if itemPath != "":
+                items += f'ItemPath="{itemPath}" '
+            items += f'ClientItemHandle="{itemName}"'
+            items += f'></{ns}:Items>'
         return items
 
+    def _buildOptionItems(self, options: dict, namespace: str = "") -> str:
+        """
+        Build the <Options> content payload for a request
 
-    def _buildReadPayload(self, itemList:list, namespace:str="") -> str:
+        Args:
+            options(dict): dict of options
+                example: {ReturnItemName="true" ReturnItemPath="true" ReturnItemTime="true"}
+            namespace(str): namespace
+
+        Returns:
+            option_payload(str): options in XMLDA format
+
+        """
+        ns = self.namespace if not namespace else namespace
+        option_payload = ""
+        if options:
+            option_payload += f"<{ns}:Options"
+            for o_key, o_value in options.items():
+                if isinstance(o_value, bool):
+                    o_value = str(o_value).lower()
+                option_payload += f" {o_key}=\"{o_value}\""
+            option_payload += "/>"
+        return option_payload
+
+    def _buildReadPayload(self, itemList: list, options: dict = None, namespace: str = "") -> str:
         """
         Build read request payload that encapsulates a list of <Item> tags
 
@@ -440,56 +453,64 @@ class Client:
             payload(str):     items that are delimited by new line char
         """
 
+        if options is None:
+            options = {}
         ns = self.namespace if not namespace else namespace
         payload = self._buildEncapsulationHeader(namespace=ns)
-        payload += f"<{ns}:Read><{ns}:ItemList>"
+        payload += f"<{ns}:Read>"
+        payload += self._buildOptionItems(options=options, namespace=ns)
+        payload += f"<{ns}:ItemList>"
         payload += self._buildReadItems(itemList=itemList, namespace=ns)
         payload += f"</{ns}:ItemList></{ns}:Read>"
         payload += self._buildEncapsulationFooter()
         return payload
 
-
-    def read(self, itemList:list=[], namespace:str="") -> list:
+    def read(self, itemList=None, options=None, namespace: str = "") -> list:
         """
         Read tags data from the server
 
         Args:
             itemList(list): the list of tags
+            options: dict of options
+                Example: {ReturnItemName="true" ReturnItemPath="true" ReturnItemTime="true"}
             namespace(str): override the default namespace
 
         Returns:
             result(list): list of tags
         """
 
+        if itemList is None:
+            return []
+        if options is None:
+            options = {}
         tags = self.itemList if not itemList else itemList
         namespace = self.namespace if not namespace else namespace
 
-        payload = self._buildReadPayload(itemList=tags, namespace=namespace)
+        payload = self._buildReadPayload(itemList=tags, options=options, namespace=namespace)
         self.__log.debug(f"Sent Read Payload: \n{payload}")
         response = self.send(payload=payload)
         self.__log.debug(f"Received Read Response: \n{response}")
         result = self._parseReadWriteResponse(content=response)
         return result
 
-
     def subscribe(self,
-        itemList:list=[],
-        namespace:str="",
-        returnValuesOnReply:bool=False,
-        subscriptionPingRate:int=0,
-        returnErrorText:bool=True,
-        returnDiagnosticInfo:bool=False,
-        returnItemTime:bool=False,
-        returnItemPath:bool=False,
-        returnItemName:bool=False,
-        requestDeadline:str="",
-        clientRequestHandle:str="",
-        localeID:str="",
-        itemPath:str="",
-        deadband:float=0.0,
-        requestedSamplingRate:int=0,
-        enableBuffering:bool=False
-    ) -> Subscription:
+                  itemList: list = [],
+                  namespace: str = "",
+                  returnValuesOnReply: bool = False,
+                  subscriptionPingRate: int = 0,
+                  returnErrorText: bool = True,
+                  returnDiagnosticInfo: bool = False,
+                  returnItemTime: bool = False,
+                  returnItemPath: bool = False,
+                  returnItemName: bool = False,
+                  requestDeadline: str = "",
+                  clientRequestHandle: str = "",
+                  localeID: str = "",
+                  itemPath: str = "",
+                  deadband: float = 0.0,
+                  requestedSamplingRate: int = 0,
+                  enableBuffering: bool = False
+                  ) -> Subscription:
         """
         Subscribe item(s)
 
@@ -575,8 +596,7 @@ class Client:
         result = self._parseSubscribeResponse(content=response)
         return result
 
-
-    def _parseSubscribeResponse(self, content:str) -> Subscription:
+    def _parseSubscribeResponse(self, content: str) -> Subscription:
         """
         Parse Subscribe response
 
@@ -586,7 +606,7 @@ class Client:
         Returns:
             subscription(Subscription): named tuple
         """
-        
+
         subscription = Subscription()
         # walk the XML tree and focus on Items as results
         try:
@@ -607,7 +627,7 @@ class Client:
                 if value is not None:
                     data_type = value.get("{http://www.w3.org/2001/XMLSchema-instance}type").replace("xsd:", "")
                     itemList.append(
-                        {   
+                        {
                             "clientItemHandle": f"{tag_name}",
                             "type": data_type,
                             "value": cast_data(value=value.text, data_type=data_type)
@@ -620,8 +640,7 @@ class Client:
         subscription = subscription._replace(items=itemList)
         return subscription
 
-
-    def subscriptionCancel(self, serverSubHandle:str, clientRequestHandle:str="", namespace:str="") -> Fault:
+    def subscriptionCancel(self, serverSubHandle: str, clientRequestHandle: str = "", namespace: str = "") -> Fault:
         """
         Subscription Cancel
 
@@ -650,8 +669,7 @@ class Client:
         result = self._parseSubscriptionCancelResponse(content=response)
         return result
 
-
-    def _parseSubscriptionCancelResponse(self, content:str) -> Fault:
+    def _parseSubscriptionCancelResponse(self, content: str) -> Fault:
         """
         Parse Subscription Cancel response
 
@@ -661,7 +679,7 @@ class Client:
         Returns:
             result(Fault): named tuple
         """
-        
+
         fault = Fault()
         # walk the XML tree and focus on Items as results
         try:
@@ -670,7 +688,7 @@ class Client:
             self.__log.error(f"self._parseSubscriptionCancelResponse(): {str(ET.ParseError)}")
             fault = fault._replace(faultcode="ET.ParseError", detail=str(ET.ParseError))
             return fault
-        
+
         for p in root.findall('.//'):
             if p.tag.endswith("faultcode"):
                 fault = fault._replace(faultcode=p.text)
@@ -680,8 +698,7 @@ class Client:
                 fault = fault._replace(detail=p.text)
         return fault
 
-
-    def _buildSubscriptionPolledRefreshItems(self, subscriptions:list, namespace:str="") -> str:
+    def _buildSubscriptionPolledRefreshItems(self, subscriptions: list, namespace: str = "") -> str:
         """
         Build the <Items> content payload for Subscription Polled Refresh request
 
@@ -703,22 +720,21 @@ class Client:
 
         return items
 
-
     def subscriptionPolledRefresh(
-        self,
-        subscriptions:list,
-        namespace:str="",
-        holdTime:str="",
-        waitTime:int=0,
-        returnAllItems:bool=False,
-        returnErrorText:bool=True,
-        returnDiagnosticInfo:bool=False,
-        returnItemTime:bool=False,
-        returnItemPath:bool=False,
-        returnItemName:bool=False,
-        requestDeadline:str="",
-        clientRequestHandle:str="",
-        localeID:str=""
+            self,
+            subscriptions: list,
+            namespace: str = "",
+            holdTime: str = "",
+            waitTime: int = 0,
+            returnAllItems: bool = False,
+            returnErrorText: bool = True,
+            returnDiagnosticInfo: bool = False,
+            returnItemTime: bool = False,
+            returnItemPath: bool = False,
+            returnItemName: bool = False,
+            requestDeadline: str = "",
+            clientRequestHandle: str = "",
+            localeID: str = ""
     ) -> list:
         """
         Poll subscribed items
@@ -779,8 +795,7 @@ class Client:
         result = self._parseSubscriptionPolledRefreshResponse(content=response)
         return result
 
-
-    def _parseSubscriptionPolledRefreshResponse(self, content:str) -> list:
+    def _parseSubscriptionPolledRefreshResponse(self, content: str) -> list:
         """
         Parse Subscription Polled Refresh response
 
@@ -820,7 +835,7 @@ class Client:
                 if value is not None:
                     data_type = value.get("{http://www.w3.org/2001/XMLSchema-instance}type").replace("xsd:", "")
                     itemList.append(
-                        {   
+                        {
                             "itemName": f"{itemName}",
                             "type": data_type,
                             "value": cast_data(value=value.text, data_type=data_type)
@@ -837,8 +852,7 @@ class Client:
 
         return result
 
-
-    def _buildWriteItems(self, itemList:list, namespace:str="") -> str:
+    def _buildWriteItems(self, itemList: list, namespace: str = "") -> str:
         """
         Build the <Items> content payload for write request
 
@@ -857,14 +871,13 @@ class Client:
         items = ""
         for item in itemList:
             items += (f'<{ns}:Items ClientItemHandle="{item.itemName}" '
-                        f'ItemPath="{item.itemPath}" ItemName="{item.itemName}" '
-                        f'ValueTypeQualifier="xsd:{item.type}">'
-                        f'<Value xsi:Type="xsd:{item.type}">{item.value}</Value></{ns}:Items>'
-                    )
+                      f'ItemPath="{item.itemPath}" ItemName="{item.itemName}" '
+                      f'ValueTypeQualifier="xsd:{item.type}">'
+                      f'<Value xsi:Type="xsd:{item.type}">{item.value}</Value></{ns}:Items>'
+                      )
         return items
 
-
-    def _buildWritePayload(self, itemList:list, namespace:str="") -> str:
+    def _buildWritePayload(self, itemList: list, namespace: str = "") -> str:
         """
         Build write request payload that encapsulates a list of <Item> tags
 
@@ -888,8 +901,7 @@ class Client:
         payload += self._buildEncapsulationFooter()
         return payload
 
-
-    def write(self, itemList:list=[], namespace:str="") -> list:
+    def write(self, itemList: list = [], namespace: str = "") -> list:
         """
         Write tags data to the server
 
@@ -911,8 +923,7 @@ class Client:
         result = self._parseReadWriteResponse(content=response)
         return result
 
-
-    def _parseReadWriteResponse(self, content:str) -> list:
+    def _parseReadWriteResponse(self, content: str) -> list:
         """
         Parse either Read / Write response
 
@@ -922,7 +933,7 @@ class Client:
         Returns:
             result(list[Tag]): list of tags
         """
-        
+
         result = []
         # walk the XML tree and focus on Items as results
         try:
@@ -938,7 +949,7 @@ class Client:
                 if value is not None:
                     data_type = value.get("{http://www.w3.org/2001/XMLSchema-instance}type").replace("xsd:", "")
                     tag = tag._replace(
-                        value=cast_data(value=value.text, data_type=data_type), 
+                        value=cast_data(value=value.text, data_type=data_type),
                         type=data_type
                     )
                 if "ResultID" in p.attrib:

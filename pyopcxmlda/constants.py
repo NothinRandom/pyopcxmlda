@@ -14,6 +14,8 @@ ENVELOPE_OPEN = (
 )
 ENVELOPE_HEADER = '<SOAP-ENV:Header></SOAP-ENV:Header>'
 ENVELOPE_BODY_OPEN = '<SOAP-ENV:Body>'
+ENVELOPE_BODY_OPEN_NS_1 = '<SOAP-ENV:Body xmlns:'
+ENVELOPE_BODY_OPEN_NS_2 = '="http://opcfoundation.org/webservices/XMLDA/1.0/">'
 # PAYLOAD GOES HERE
 ENVELOPE_BODY_CLOSE = '</SOAP-ENV:Body>'
 ENVELOPE_CLOSE = '</SOAP-ENV:Envelope>'
