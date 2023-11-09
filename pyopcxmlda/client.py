@@ -954,9 +954,12 @@ class Client:
             return result
         for p in root.findall('.//'):
             if "Items" in p.tag:
+                ts = p.attrib.get("Timestamp", None)
+                if ts:
+                    ts = datetime.fromisoformat(ts)
                 tag = Tag(
                     itemName=p.attrib["ClientItemHandle"],
-                    timestamp=datetime.fromisoformat(p.attrib["Timestamp"])
+                    timestamp=ts
                 )
                 value = p.find('.//')
                 # get value
