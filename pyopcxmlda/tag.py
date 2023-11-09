@@ -1,5 +1,6 @@
 from typing import NamedTuple, Any, Optional
 from reprlib import repr as _r
+from datetime import datetime
 
 
 __all__ = ["Tag"]
@@ -38,11 +39,14 @@ class Fault(NamedTuple):
 
 
 class Tag(NamedTuple):
-    itemName: str                   #: item name tag read/written or request name
-    value: Optional[Any] = None     #: value read/written, may be ``None`` on error
-    itemPath: Optional[str] = ''    #: item path
-    type: Optional[str] = ''        #: data type of tag
-    error: Optional[str] = ''       #: error message if unsuccessful, else ``None``
+    itemName: str                           #: item name tag read/written or request name
+    value: Optional[Any] = None             #: value read/written, may be ``None`` on error
+    itemPath: Optional[str] = ''            #: item path
+    type: Optional[str] = ''                #: data type of tag
+    error: Optional[str] = ''               #: error message if unsuccessful, else ``None``
+    quality: Optional[dict] = None          #: quality of value
+    timestamp: Optional[datetime] = None    #: timestamp of value
+
 
 
     def __bool__(self):
