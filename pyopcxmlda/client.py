@@ -1,6 +1,7 @@
 import logging
 import requests
 import xml.etree.ElementTree as ET
+from datetime import datetime
 
 from . import constants as const
 from .tag import (
@@ -953,7 +954,10 @@ class Client:
             return result
         for p in root.findall('.//'):
             if "Items" in p.tag:
-                tag = Tag(itemName=p.attrib["ClientItemHandle"])
+                tag = Tag(
+                    itemName=p.attrib["ClientItemHandle"],
+                    timestamp=datetime.fromisoformat(p.attrib["Timestamp"])
+                )
                 value = p.find('.//')
                 # get value
                 if value is not None:
